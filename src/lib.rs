@@ -1,6 +1,8 @@
-/// A light utility helping with unix mode representation
+/// A light utility helping with unix mode representation.
 ///
 /// (light here means there aren't many features)
+///
+/// The Mode struct implements Displays and prints as `"rwxrwxrwx"`
 ///
 /// ```
 ///    use umask::Mode;

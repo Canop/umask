@@ -5,6 +5,13 @@ pub struct Mode {
     value: u32
 }
 
+impl Mode {
+    /// finds if the mode indicates an executable file
+    pub fn is_exe(&self) -> bool {
+        (self.value & 0o111) != 0
+    }
+}
+
 impl From<u32> for Mode {
     fn from(value: u32) -> Self {
         Self {
