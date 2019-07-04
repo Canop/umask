@@ -24,7 +24,7 @@ impl BitOr for Mode {
 }
 
 impl Display for Mode {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_char(if (self.value & (1 << 8)) != 0 { 'r' } else { '-' })?;
         f.write_char(if (self.value & (1 << 7)) != 0 { 'w' } else { '-' })?;
         f.write_char(if (self.value & (1 << 6)) != 0 { 'x' } else { '-' })?;
