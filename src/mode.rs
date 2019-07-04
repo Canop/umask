@@ -4,7 +4,7 @@ use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Not};
 pub type Class = u32;
 pub const USER: Class = 0b111000000;
 pub const GROUP: Class = 0b000111000;
-pub const OTHER: Class = 0b000000111;
+pub const OTHERS: Class = 0b000000111;
 pub const ALL: Class = 0b111111111;
 
 pub type Permission = u32;
@@ -18,14 +18,14 @@ pub const USER_EXEC: Mode = Mode::new().with_class_perm(USER, EXEC);
 pub const GROUP_READ: Mode = Mode::new().with_class_perm(GROUP, READ);
 pub const GROUP_WRITE: Mode = Mode::new().with_class_perm(GROUP, WRITE);
 pub const GROUP_EXEC: Mode = Mode::new().with_class_perm(GROUP, EXEC);
-pub const OTHER_READ: Mode = Mode::new().with_class_perm(OTHER, READ);
-pub const OTHER_WRITE: Mode = Mode::new().with_class_perm(OTHER, WRITE);
-pub const OTHER_EXEC: Mode = Mode::new().with_class_perm(OTHER, EXEC);
+pub const OTHERS_READ: Mode = Mode::new().with_class_perm(OTHERS, READ);
+pub const OTHERS_WRITE: Mode = Mode::new().with_class_perm(OTHERS, WRITE);
+pub const OTHERS_EXEC: Mode = Mode::new().with_class_perm(OTHERS, EXEC);
 pub const ALL_READ: Mode = Mode::new().with_class_perm(ALL, READ);
 pub const ALL_WRITE: Mode = Mode::new().with_class_perm(ALL, WRITE);
 pub const ALL_EXEC: Mode = Mode::new().with_class_perm(ALL, EXEC);
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Mode {
     value: u32
 }
@@ -87,27 +87,29 @@ impl Not for Mode {
 
 impl Display for Mode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_char(if (self.value & (1 << 8)) != 0 { 'r' } else { '-' })?;
-        f.write_char(if (self.value & (1 << 7)) != 0 { 'w' } else { '-' })?;
-        f.write_char(if (self.value & (1 << 6)) != 0 { 'x' } else { '-' })?;
-        f.write_char(if (self.value & (1 << 5)) != 0 { 'r' } else { '-' })?;
-        f.write_char(if (self.value & (1 << 4)) != 0 { 'w' } else { '-' })?;
-        f.write_char(if (self.value & (1 << 3)) != 0 { 'x' } else { '-' })?;
-        f.write_char(if (self.value & (1 << 2)) != 0 { 'r' } else { '-' })?;
-        f.write_char(if (self.value & (1 << 1)) != 0 { 'w' } else { '-' })?;
-        f.write_char(if (self.value & 1) != 0 { 'x' } else { '-' })?;
+        f.write_char(if self.has(USER_READ) { 'r' } else { '-' })?;
+        f.write_char(if self.has(USER_WRITE) { 'w' } else { '-' })?;
+        f.write_char(if self.has(USER_EXEC) { 'x' } else { '-' })?;
+        f.write_char(if self.has(GROUP_READ) { 'r' } else { '-' })?;
+        f.write_char(if self.has(GROUP_WRITE) { 'w' } else { '-' })?;
+        f.write_char(if self.has(GROUP_EXEC) { 'x' } else { '-' })?;
+        f.write_char(if self.has(OTHERS_READ) { 'r' } else { '-' })?;
+        f.write_char(if self.has(OTHERS_WRITE) { 'w' } else { '-' })?;
+        f.write_char(if self.has(OTHERS_EXEC) { 'x' } else { '-' })?;
         Ok(())
     }
 }
 
 impl Mode {
     /// build a mode with absolutely no permission
+    #[inline(always)]
     pub const fn new() -> Self {
         Self {
             value: 0
         }
     }
     /// build a mode with all permissions given to everybody
+    #[inline(always)]
     pub const fn all() -> Self {
         Self {
             value: 0b111111111
@@ -115,8 +117,13 @@ impl Mode {
     }
     /// finds if the mode indicates an executable file
     #[inline(always)]
-    pub const fn is_exe(&self) -> bool {
+    pub const fn is_exe(self) -> bool {
         (self.value & 0o111) != 0
+    }
+    /// indicates whether the passed class/permissions are all present in self
+    #[inline(always)]
+    pub const fn has(self, other: Self) -> bool {
+        self.value & other.value == other.value
     }
     /// return a new mode, with the permission added for the class
     /// (does nothing if the permission is already given to that class)
