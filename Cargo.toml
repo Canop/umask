@@ -7,7 +7,7 @@ description = "utility to deal with unix access mode"
 edition = "2018"
 keywords = ["unix", "umask", "permission", "mode"]
 license = "MIT"
-categories = ["utilities"]
+categories = []
 readme = "README.md"
 
 [dependencies]
