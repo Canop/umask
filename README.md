@@ -14,7 +14,9 @@
 
 # umask
 
-A utility to build and display unix access permission modes
+A light utility helping with unix mode representation, with strong types to avoid misusing constants.
+
+The Mode struct implements `Display` and prints as `"rwxrwxrwx"`
 
 ### Import
 
@@ -31,6 +33,9 @@ use umask::*;
 // You can build from a number:
 assert_eq!("rw-r--r--", Mode::from(0b110100100).to_string());
 assert_eq!("rw-r--r--", Mode::from(0o644).to_string());
+
+// or from a path:
+let mode = Mode::try_from(&path)?;
 
 // You may use `|` to combine class permissions:
 let mu = Mode::from(0o600);

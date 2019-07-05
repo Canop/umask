@@ -1,7 +1,7 @@
 //! A light utility helping with unix mode representation, with strong
 //!  types to avoid misusing constants.
 //!
-//! The Mode struct implements Displays and prints as `"rwxrwxrwx"`
+//! The Mode struct implements `Display` and prints as `"rwxrwxrwx"`
 //!
 //! ```
 //! use umask::*;
