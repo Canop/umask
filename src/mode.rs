@@ -1,8 +1,10 @@
 use std::fmt::{self, Display, Formatter, Write};
+use std::io;
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Not};
 use std::path::Path;
-use std::{fs, io};
 
+#[cfg(unix)]
+use std::fs;
 #[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
 
@@ -122,13 +124,17 @@ impl Mode {
     }
     /// return the mode for the given path.
     /// On non unix platforms, return `Mode::all()`
+    #[allow(unused_variables)]
     pub fn try_from(path: &Path) -> Result<Self, io::Error> {
-        Ok(if cfg!(unix) {
-            let metadata = fs::metadata(&path)?;
-            Mode::from(metadata.mode())
-        } else {
-            Self::all() // well, let's assume everything is permitted
-        })
+        match () {
+            #[cfg(unix)]
+            () => {
+                let metadata = fs::metadata(&path)?;
+                Ok(Mode::from(metadata.mode()))
+            }
+            #[cfg(not(unix))]
+            () => Ok(Self::all()),
+        }
     }
     /// finds if the mode indicates an executable file
     #[inline(always)]
