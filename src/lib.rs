@@ -11,10 +11,10 @@
 //! assert_eq!("rw-r--r--", Mode::from(0o644).to_string());
 //!
 //! // You may use `|` to combine class permissions:
-//! let mu = Mode::from(0o600);
-//! let mo = Mode::from(0o004);
-//! let muo = mu | mo;
-//! assert_eq!("rw----r--", muo.to_string());
+//! let mu = Mode::from(0o640);
+//! let mo = Mode::from(0o044);
+//! assert_eq!("rw-r--r--", (mu | mo).to_string());
+//! assert_eq!("---r-----", (mu & mo).to_string());
 //!
 //! // You can use more semantic constructs:
 //! let m = Mode::all()
