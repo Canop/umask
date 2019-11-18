@@ -9,12 +9,14 @@ use std::fs;
 use std::os::unix::fs::MetadataExt;
 
 pub type Class = u32;
+
 pub const USER: Class = 0b111000000;
 pub const GROUP: Class = 0b000111000;
 pub const OTHERS: Class = 0b000000111;
 pub const ALL: Class = 0b111111111;
 
 pub type Permission = u32;
+
 pub const READ: Permission = 0b100100100;
 pub const WRITE: Permission = 0b010010010;
 pub const EXEC: Permission = 0b001001001;
@@ -34,22 +36,24 @@ pub const ALL_EXEC: Mode = Mode::new().with_class_perm(ALL, EXEC);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Mode {
-    value: u32
+    value: u32,
 }
 
 impl Default for Mode {
     fn default() -> Self {
-        Self {
-            value: 0
-        }
+        Self { value: 0 }
+    }
+}
+
+impl fmt::Debug for Mode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
 impl From<u32> for Mode {
     fn from(value: u32) -> Self {
-        Self {
-            value
-        }
+        Self { value }
     }
 }
 
@@ -57,7 +61,7 @@ impl BitAnd for Mode {
     type Output = Self;
     fn bitand(self, other: Self) -> Self {
         Self {
-            value: self.value & other.value
+            value: self.value & other.value,
         }
     }
 }
@@ -72,7 +76,7 @@ impl BitOr for Mode {
     type Output = Self;
     fn bitor(self, other: Self) -> Self {
         Self {
-            value: self.value | other.value
+            value: self.value | other.value,
         }
     }
 }
@@ -86,9 +90,7 @@ impl BitOrAssign for Mode {
 impl Not for Mode {
     type Output = Self;
     fn not(self) -> Self::Output {
-        Self {
-            value: ! self.value
-        }
+        Self { value: !self.value }
     }
 }
 
@@ -111,16 +113,12 @@ impl Mode {
     /// build a mode with absolutely no permission
     #[inline(always)]
     pub const fn new() -> Self {
-        Self {
-            value: 0
-        }
+        Self { value: 0 }
     }
     /// build a mode with all permissions given to everybody
     #[inline(always)]
     pub const fn all() -> Self {
-        Self {
-            value: 0b111111111
-        }
+        Self { value: 0b111111111 }
     }
     /// return the mode for the given path.
     /// On non unix platforms, return `Mode::all()`
@@ -151,7 +149,7 @@ impl Mode {
     #[inline(always)]
     pub const fn with_class_perm(self, class: Class, perm: Permission) -> Self {
         Self {
-            value: self.value | ( class & perm )
+            value: self.value | (class & perm),
         }
     }
     /// return a new mode, with the permission removed for the class
@@ -159,21 +157,21 @@ impl Mode {
     #[inline(always)]
     pub const fn without_class_perm(self, class: Class, perm: Permission) -> Self {
         Self {
-            value: self.value & !( class & perm )
+            value: self.value & !(class & perm),
         }
     }
     /// add the class/permissions of the other mode
     #[inline(always)]
     pub const fn with(self, other: Mode) -> Self {
         Self {
-            value: self.value | other.value
+            value: self.value | other.value,
         }
     }
     /// remove the class/permissions of the other mode
     #[inline(always)]
     pub const fn without(self, other: Mode) -> Self {
         Self {
-            value: self.value & ! other.value
+            value: self.value & !other.value,
         }
     }
 }
