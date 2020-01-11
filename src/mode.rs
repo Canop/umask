@@ -124,15 +124,13 @@ impl Mode {
     /// On non unix platforms, return `Mode::all()`
     #[allow(unused_variables)]
     pub fn try_from(path: &Path) -> Result<Self, io::Error> {
-        match () {
-            #[cfg(unix)]
-            () => {
-                let metadata = fs::metadata(&path)?;
-                Ok(Mode::from(metadata.mode()))
-            }
-            #[cfg(not(unix))]
-            () => Ok(Self::all()),
+        #[cfg(unix)]
+        {
+            let metadata = fs::metadata(&path)?;
+            Ok(Mode::from(metadata.mode()))
         }
+        #[cfg(not(unix))]
+        Ok(Self::all())
     }
     /// finds if the mode indicates an executable file
     #[inline(always)]
