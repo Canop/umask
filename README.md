@@ -58,4 +58,7 @@ assert_eq!("rwxr-xr-x", m.to_string());
 let m = ALL_READ | USER_WRITE;
 assert_eq!("rw-r--r--", m.to_string());
 
- ```
+// you may test a bit or bitset
+assert_eq!(m.has(OTHERS_EXEC), false);
+
+```
