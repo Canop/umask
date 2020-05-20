@@ -1,8 +1,9 @@
 /// display the content of the current directory
 
-use std::{env, io};
-use umask::Mode;
-use std::path::PathBuf;
+use {
+    std::{env, io, path::PathBuf},
+    umask::Mode,
+};
 
 fn list_files() -> io::Result<()> {
     let root = env::current_dir()?;
@@ -20,6 +21,6 @@ fn list_files() -> io::Result<()> {
     Ok(())
 }
 
-fn main(){
-    list_files().unwrap();
+fn main() -> io::Result<()> {
+    list_files()
 }

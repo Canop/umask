@@ -1,7 +1,9 @@
-use std::fmt::{self, Display, Formatter, Write};
-use std::io;
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Not};
-use std::path::Path;
+use std::{
+    fmt::{self, Display, Formatter, Write},
+    io,
+    ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Not},
+    path::Path,
+};
 
 #[cfg(unix)]
 use std::fs;
