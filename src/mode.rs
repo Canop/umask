@@ -59,6 +59,18 @@ impl From<u32> for Mode {
     }
 }
 
+impl Into<u32> for Mode {
+    fn into(self) -> u32 {
+        self.value
+    }
+}
+
+impl Into<u32> for &Mode {
+    fn into(self) -> u32 {
+        self.value
+    }
+}
+
 impl BitAnd for Mode {
     type Output = Self;
     fn bitand(self, other: Self) -> Self {
