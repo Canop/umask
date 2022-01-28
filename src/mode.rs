@@ -36,20 +36,14 @@ pub const ALL_READ: Mode = Mode::new().with_class_perm(ALL, READ);
 pub const ALL_WRITE: Mode = Mode::new().with_class_perm(ALL, WRITE);
 pub const ALL_EXEC: Mode = Mode::new().with_class_perm(ALL, EXEC);
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct Mode {
     value: u32,
 }
 
-impl Default for Mode {
-    fn default() -> Self {
-        Self { value: 0 }
-    }
-}
-
 impl fmt::Debug for Mode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}", self)
     }
 }
 
@@ -59,15 +53,15 @@ impl From<u32> for Mode {
     }
 }
 
-impl Into<u32> for Mode {
-    fn into(self) -> u32 {
-        self.value
+impl From<Mode> for u32 {
+    fn from(mode: Mode) -> Self {
+        mode.value
     }
 }
 
-impl Into<u32> for &Mode {
-    fn into(self) -> u32 {
-        self.value
+impl From<&Mode> for u32 {
+    fn from(mode: &Mode) -> Self {
+        mode.value
     }
 }
 
