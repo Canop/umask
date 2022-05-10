@@ -23,6 +23,12 @@ pub const READ: Permission = 0b100100100;
 pub const WRITE: Permission = 0b010010010;
 pub const EXEC: Permission = 0b001001001;
 
+pub type ExtraPermission = u32;
+
+pub const STICKY: ExtraPermission = 0o1000;
+pub const SETGID: ExtraPermission = 0o2000;
+pub const SETUID: ExtraPermission = 0o4000;
+
 pub const USER_READ: Mode = Mode::new().with_class_perm(USER, READ);
 pub const USER_WRITE: Mode = Mode::new().with_class_perm(USER, WRITE);
 pub const USER_EXEC: Mode = Mode::new().with_class_perm(USER, EXEC);
@@ -106,13 +112,13 @@ impl Display for Mode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_char(if self.has(USER_READ) { 'r' } else { '-' })?;
         f.write_char(if self.has(USER_WRITE) { 'w' } else { '-' })?;
-        f.write_char(if self.has(USER_EXEC) { 'x' } else { '-' })?;
+        f.write_char(if self.has_extra(SETUID) && self.has(USER_EXEC) { 's' } else if self.has_extra(SETUID) { 'S' } else if self.has(USER_EXEC) { 'x' } else { '-' })?;
         f.write_char(if self.has(GROUP_READ) { 'r' } else { '-' })?;
         f.write_char(if self.has(GROUP_WRITE) { 'w' } else { '-' })?;
-        f.write_char(if self.has(GROUP_EXEC) { 'x' } else { '-' })?;
+        f.write_char(if self.has_extra(SETGID) && self.has(GROUP_EXEC) { 's' } else if self.has_extra(SETGID) { 'S' } else if self.has(GROUP_EXEC) { 'x' } else { '-' })?;
         f.write_char(if self.has(OTHERS_READ) { 'r' } else { '-' })?;
         f.write_char(if self.has(OTHERS_WRITE) { 'w' } else { '-' })?;
-        f.write_char(if self.has(OTHERS_EXEC) { 'x' } else { '-' })?;
+        f.write_char(if self.has_extra(STICKY) && self.has(OTHERS_EXEC) { 's' } else if self.has_extra(STICKY) { 'S' } else if self.has(OTHERS_EXEC) { 'x' } else { '-' })?;
         Ok(())
     }
 }
@@ -149,6 +155,11 @@ impl Mode {
     #[inline(always)]
     pub const fn has(self, other: Self) -> bool {
         self.value & other.value == other.value
+    }
+    /// indicates whether the passed extra permission is present in self
+    #[inline(always)]
+    pub const fn has_extra(self, other: ExtraPermission) -> bool {
+        self.value & other == other
     }
     /// return a new mode, with the permission added for the class
     /// (does nothing if the permission is already given to that class)
