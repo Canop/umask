@@ -12,6 +12,7 @@ use std::os::unix::fs::MetadataExt;
 
 pub type Class = u32;
 
+pub const EXTRA: Class = 0b111000000000;
 pub const USER: Class = 0b111000000;
 pub const GROUP: Class = 0b000111000;
 pub const OTHERS: Class = 0b000000111;
@@ -25,8 +26,15 @@ pub const EXEC: Permission = 0b001001001;
 
 pub type ExtraPermission = u32;
 
+/// When the sticky bit is set on a directory, files in that directory can only be deleted by the owner.
 pub const STICKY: ExtraPermission = 0o1000;
+/// When the setgid bit is set on a an executable file,
+/// the file will be executed by with the permissions of the file's group instead of the executing user's group.
+///
+/// When set on a directory, files and subdirectories created in it are assigned the same group id as the parent directory.
 pub const SETGID: ExtraPermission = 0o2000;
+/// When the setuid bit is set on a an executable file,
+/// the file will be executed by with the permissions of the file's owner instead of the executing user.
 pub const SETUID: ExtraPermission = 0o4000;
 
 pub const USER_READ: Mode = Mode::new().with_class_perm(USER, READ);
@@ -112,13 +120,37 @@ impl Display for Mode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_char(if self.has(USER_READ) { 'r' } else { '-' })?;
         f.write_char(if self.has(USER_WRITE) { 'w' } else { '-' })?;
-        f.write_char(if self.has_extra(SETUID) && self.has(USER_EXEC) { 's' } else if self.has_extra(SETUID) { 'S' } else if self.has(USER_EXEC) { 'x' } else { '-' })?;
+        f.write_char(if self.has_extra(SETUID) && self.has(USER_EXEC) {
+            's'
+        } else if self.has_extra(SETUID) {
+            'S'
+        } else if self.has(USER_EXEC) {
+            'x'
+        } else {
+            '-'
+        })?;
         f.write_char(if self.has(GROUP_READ) { 'r' } else { '-' })?;
         f.write_char(if self.has(GROUP_WRITE) { 'w' } else { '-' })?;
-        f.write_char(if self.has_extra(SETGID) && self.has(GROUP_EXEC) { 's' } else if self.has_extra(SETGID) { 'S' } else if self.has(GROUP_EXEC) { 'x' } else { '-' })?;
+        f.write_char(if self.has_extra(SETGID) && self.has(GROUP_EXEC) {
+            's'
+        } else if self.has_extra(SETGID) {
+            'S'
+        } else if self.has(GROUP_EXEC) {
+            'x'
+        } else {
+            '-'
+        })?;
         f.write_char(if self.has(OTHERS_READ) { 'r' } else { '-' })?;
         f.write_char(if self.has(OTHERS_WRITE) { 'w' } else { '-' })?;
-        f.write_char(if self.has_extra(STICKY) && self.has(OTHERS_EXEC) { 's' } else if self.has_extra(STICKY) { 'S' } else if self.has(OTHERS_EXEC) { 'x' } else { '-' })?;
+        f.write_char(if self.has_extra(STICKY) && self.has(OTHERS_EXEC) {
+            't'
+        } else if self.has_extra(STICKY) {
+            'T'
+        } else if self.has(OTHERS_EXEC) {
+            'x'
+        } else {
+            '-'
+        })?;
         Ok(())
     }
 }
@@ -129,7 +161,8 @@ impl Mode {
     pub const fn new() -> Self {
         Self { value: 0 }
     }
-    /// build a mode with all permissions given to everybody
+    /// Build a mode with all permissions given to everybody.
+    /// This does not include [`ExtraPermission`] bits.
     #[inline(always)]
     pub const fn all() -> Self {
         Self { value: 0b111111111 }
@@ -160,6 +193,22 @@ impl Mode {
     #[inline(always)]
     pub const fn has_extra(self, other: ExtraPermission) -> bool {
         self.value & other == other
+    }
+    /// return a new mode, with the extra permission set
+    /// (does nothing if the extra permission is already set for the mode)
+    #[inline(always)]
+    pub const fn with_extra(self, perm: ExtraPermission) -> Self {
+        Self {
+            value: self.value | perm,
+        }
+    }
+    /// return a new mode, without the extra permission set
+    /// (does nothing if the extra permission is not set for the mode)
+    #[inline(always)]
+    pub const fn without_extra(self, perm: ExtraPermission) -> Self {
+        Self {
+            value: self.value & !perm,
+        }
     }
     /// return a new mode, with the permission added for the class
     /// (does nothing if the permission is already given to that class)
@@ -215,4 +264,17 @@ fn test_print() {
     assert_eq!("------r--", mo.to_string());
     let muo = mu | mo;
     assert_eq!("rw----r--", muo.to_string());
+}
+
+#[test]
+fn test_extra_permissions() {
+    let mut m = Mode::all()
+        .with_extra(STICKY)
+        .with_extra(SETUID)
+        .with_extra(SETGID);
+    assert_eq!("rwsrwsrwt", m.to_string());
+    m &= !Mode::from(EXEC);
+    assert_eq!("rwSrwSrwT", m.to_string());
+    let m = m.without_extra(STICKY);
+    assert_eq!("rwSrwSrw-", m.to_string());
 }
