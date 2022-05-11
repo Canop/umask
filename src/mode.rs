@@ -26,15 +26,17 @@ pub const EXEC: Permission = 0b001001001;
 
 pub type ExtraPermission = u32;
 
-/// When the sticky bit is set on a directory, files in that directory can only be deleted by the owner.
+/// When the sticky bit is set on a directory, files in that directory can only be
+/// deleted by the owner.
 pub const STICKY: ExtraPermission = 0o1000;
-/// When the setgid bit is set on a an executable file,
-/// the file will be executed by with the permissions of the file's group instead of the executing user's group.
+/// When the setgid bit is set on a an executable file, the file will be executed
+/// by with the permissions of the file's group instead of the executing user's group.
 ///
-/// When set on a directory, files and subdirectories created in it are assigned the same group id as the parent directory.
+/// When set on a directory, files and subdirectories created in it are assigned the
+/// same group id as the parent directory.
 pub const SETGID: ExtraPermission = 0o2000;
-/// When the setuid bit is set on a an executable file,
-/// the file will be executed by with the permissions of the file's owner instead of the executing user.
+/// When the setuid bit is set on a an executable file, the file will be executed by
+/// with the permissions of the file's owner instead of the executing user.
 pub const SETUID: ExtraPermission = 0o4000;
 
 pub const USER_READ: Mode = Mode::new().with_class_perm(USER, READ);
@@ -50,7 +52,7 @@ pub const ALL_READ: Mode = Mode::new().with_class_perm(ALL, READ);
 pub const ALL_WRITE: Mode = Mode::new().with_class_perm(ALL, WRITE);
 pub const ALL_EXEC: Mode = Mode::new().with_class_perm(ALL, EXEC);
 
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Mode {
     value: u32,
 }
@@ -118,7 +120,9 @@ impl Not for Mode {
 
 impl Display for Mode {
     /// Formats the Mode.
-    /// If you want to prevent the extra permission bits from being displayed, use [`Mode::without_any_extra()`] to remove them before calling format.
+    ///
+    /// If you want to prevent the extra permission bits from being displayed,
+    /// use [`Mode::without_any_extra()`] to remove them before calling format.
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_char(if self.has(USER_READ) { 'r' } else { '-' })?;
         f.write_char(if self.has(USER_WRITE) { 'w' } else { '-' })?;
@@ -166,7 +170,7 @@ impl Display for Mode {
 /// If you don't want to include this functionality, call [`without_any_extra()`](Mode::without_any_extra())
 /// before converting the Mode into a string.
 impl Mode {
-    /// build a mode with absolutely no permission
+    /// Build a mode with absolutely no permission
     #[inline(always)]
     pub const fn new() -> Self {
         Self { value: 0 }
@@ -177,7 +181,7 @@ impl Mode {
     pub const fn all() -> Self {
         Self { value: 0b111111111 }
     }
-    /// return the mode for the given path.
+    /// Return the mode for the given path.
     /// On non unix platforms, return `Mode::all()`
     #[allow(unused_variables)]
     pub fn try_from(path: &Path) -> Result<Self, io::Error> {
@@ -189,22 +193,22 @@ impl Mode {
         #[cfg(not(unix))]
         Ok(Self::all())
     }
-    /// finds if the mode indicates an executable file
+    /// Finds if the mode indicates an executable file
     #[inline(always)]
     pub const fn is_exe(self) -> bool {
         (self.value & 0o111) != 0
     }
-    /// indicates whether the passed class/permissions are all present in self
+    /// Indicates whether the passed class/permissions are all present in self
     #[inline(always)]
     pub const fn has(self, other: Self) -> bool {
         self.value & other.value == other.value
     }
-    /// indicates whether the passed extra permission is present in self
+    /// Indicates whether the passed extra permission is present in self
     #[inline(always)]
     pub const fn has_extra(self, other: ExtraPermission) -> bool {
         self.value & other == other
     }
-    /// return a new mode, with the extra permission set
+    /// Return a new mode, with the extra permission set
     /// (does nothing if the extra permission is already set for the mode)
     #[inline(always)]
     pub const fn with_extra(self, perm: ExtraPermission) -> Self {
@@ -212,7 +216,7 @@ impl Mode {
             value: self.value | perm,
         }
     }
-    /// return a new mode, without the extra permission set
+    /// Return a new mode, without the extra permission set
     /// (does nothing if the extra permission is not set for the mode)
     #[inline(always)]
     pub const fn without_extra(self, perm: ExtraPermission) -> Self {
@@ -220,14 +224,14 @@ impl Mode {
             value: self.value & !perm,
         }
     }
-    /// return a new mode, without any extra permission bits set
+    /// Return a new mode, without any extra permission bits set
     /// (does nothing if no extra permissions are set for the mode)
     pub const fn without_any_extra(self) -> Self {
         Self {
             value: self.value & !EXTRA,
         }
     }
-    /// return a new mode, with the permission added for the class
+    /// Return a new mode, with the permission added for the class
     /// (does nothing if the permission is already given to that class)
     #[inline(always)]
     pub const fn with_class_perm(self, class: Class, perm: Permission) -> Self {
@@ -295,3 +299,4 @@ fn test_extra_permissions() {
     let m = m.without_extra(STICKY);
     assert_eq!("rwSrwSrw-", m.to_string());
 }
+

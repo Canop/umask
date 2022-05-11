@@ -32,6 +32,25 @@
 //! let m = ALL_READ | USER_WRITE;
 //! assert_eq!("rw-r--r--", m.to_string());
 //!
+//! // Displaying the mode can be done with the `Display`
+//! // implementation but also bit per bit for more control
+//! assert_eq!(
+//!     m.to_string().chars().next().unwrap(), // first char: 'r' or '-'
+//!     if m.has(USER_READ) { 'r' } else { '-' },
+//! );
+//!
+//! // The `Display` implementation shows the extra permission bits
+//! // (setuid, setgid and sticky):
+//! let mut m = Mode::all()
+//!     .with_extra(STICKY)
+//!     .with_extra(SETUID)
+//!     .with_extra(SETGID);
+//! assert_eq!("rwsrwsrwt", m.to_string());
+//!
+//! // But you can remove those bits for display if you want the
+//! // sometimes more familiar 'x' for execution:
+//! assert_eq!("rwxrwxrwx", m.without_any_extra().to_string());
+//!
 //! ```
 mod mode;
 
