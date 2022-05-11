@@ -117,6 +117,8 @@ impl Not for Mode {
 }
 
 impl Display for Mode {
+    /// Formats the Mode.
+    /// If you want to prevent the extra permission bits from being displayed, use [`Mode::without_any_extra()`] to remove them before calling format.
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_char(if self.has(USER_READ) { 'r' } else { '-' })?;
         f.write_char(if self.has(USER_WRITE) { 'w' } else { '-' })?;
@@ -155,6 +157,14 @@ impl Display for Mode {
     }
 }
 
+/// Represents Permissions for a file.
+///
+/// # Formatting
+///
+/// String representations of Modes include the extra permission bits,
+/// which modify how the executable permissions are displayed if set.
+/// If you don't want to include this functionality, call [`without_any_extra()`](Mode::without_any_extra())
+/// before converting the Mode into a string.
 impl Mode {
     /// build a mode with absolutely no permission
     #[inline(always)]
@@ -208,6 +218,13 @@ impl Mode {
     pub const fn without_extra(self, perm: ExtraPermission) -> Self {
         Self {
             value: self.value & !perm,
+        }
+    }
+    /// return a new mode, without any extra permission bits set
+    /// (does nothing if no extra permissions are set for the mode)
+    pub const fn without_any_extra(self) -> Self {
+        Self {
+            value: self.value & !EXTRA,
         }
     }
     /// return a new mode, with the permission added for the class
