@@ -1,3 +1,6 @@
+### next
+- implement FromStr
+
 ### v2.0.0 - 2022-05-11
 - support for setuid, setgid and sticky "extra" permission bits - Thanks @CozyPenguin
 

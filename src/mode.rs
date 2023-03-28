@@ -334,6 +334,13 @@ impl Mode {
     }
 }
 
+impl std::str::FromStr for Mode {
+    type Err = ParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s)
+    }
+}
+
 #[test]
 fn test_build() {
     let mut m = Mode::new()

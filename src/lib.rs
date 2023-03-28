@@ -10,6 +10,10 @@
 //! assert_eq!("rw-r--r--", Mode::from(0b110100100).to_string());
 //! assert_eq!("rw-r--r--", Mode::from(0o644).to_string());
 //!
+//! // Or from a string:
+//! let mode: Mode = "rw-rw-r--".parse().unwrap();
+//! assert_eq!("rw-rw-r--", mode.to_string());
+//!
 //! // You may use `|` to combine class permissions:
 //! let mu = Mode::from(0o640);
 //! let mo = Mode::from(0o044);
