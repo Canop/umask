@@ -11,3 +11,4 @@ categories = ["os::unix-apis"]
 readme = "README.md"
 
 [dependencies]
+thiserror = "1.0.40"

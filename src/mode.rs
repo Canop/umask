@@ -10,6 +10,8 @@ use std::fs;
 #[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
 
+use thiserror::Error;
+
 pub type Class = u32;
 
 pub const EXTRA: Class = 0b111000000000;
@@ -161,6 +163,19 @@ impl Display for Mode {
     }
 }
 
+/// Parsing error.
+#[derive(Debug, Error)]
+pub enum ParseError {
+    #[error("invalid character '{0}' at position {1}")]
+    InvalidChar(char, usize),
+    /// Invalid length.
+    #[error("not enough input")]
+    NotEnoughInput,
+    /// Trailing characters.
+    #[error("trailing characters")]
+    TrailingCharacters,
+}
+
 /// Represents Permissions for a file.
 ///
 /// # Formatting
@@ -192,6 +207,62 @@ impl Mode {
         }
         #[cfg(not(unix))]
         Ok(Self::all())
+    }
+    /// Try to parse a mode from a string.
+    pub fn parse<T: AsRef<str>>(s: T) -> Result<Self, ParseError> {
+        let mut result = Mode::new();
+        let mut i = s.as_ref().chars().enumerate();
+
+        #[inline]
+        fn expect_single(
+            i: &mut impl Iterator<Item = (usize, char)>,
+            n: char,
+            m: Mode,
+        ) -> Result<Mode, ParseError> {
+            match i.next() {
+                Some((_, c)) if c == n => Ok(m),
+                Some((_, '-')) => Ok(Mode::new()),
+                Some((pos, c)) => Err(ParseError::InvalidChar(c, pos)),
+                None => Err(ParseError::NotEnoughInput),
+            }
+        }
+
+        result |= expect_single(&mut i, 'r', USER_READ)?;
+        result |= expect_single(&mut i, 'w', USER_WRITE)?;
+        match i.next() {
+            Some((_, 's')) => result |= Mode::from(SETUID) | USER_EXEC,
+            Some((_, 'S')) => result |= SETUID.into(),
+            Some((_, 'x')) => result |= USER_EXEC,
+            Some((_, '-')) => (),
+            Some((pos, c)) => return Err(ParseError::InvalidChar(c, pos)),
+            None => return Err(ParseError::NotEnoughInput),
+        }
+        result |= expect_single(&mut i, 'r', GROUP_READ)?;
+        result |= expect_single(&mut i, 'w', GROUP_WRITE)?;
+        match i.next() {
+            Some((_, 's')) => result |= Mode::from(SETGID) | GROUP_EXEC,
+            Some((_, 'S')) => result |= SETGID.into(),
+            Some((_, 'x')) => result |= GROUP_EXEC,
+            Some((_, '-')) => (),
+            Some((pos, c)) => return Err(ParseError::InvalidChar(c, pos)),
+            None => return Err(ParseError::NotEnoughInput),
+        }
+        result |= expect_single(&mut i, 'r', OTHERS_READ)?;
+        result |= expect_single(&mut i, 'w', OTHERS_WRITE)?;
+        match i.next() {
+            Some((_, 't')) => result |= Mode::from(STICKY) | OTHERS_EXEC,
+            Some((_, 'T')) => result |= STICKY.into(),
+            Some((_, 'x')) => result |= OTHERS_EXEC,
+            Some((_, '-')) => (),
+            Some((pos, c)) => return Err(ParseError::InvalidChar(c, pos)),
+            None => return Err(ParseError::NotEnoughInput),
+        }
+
+        if i.next().is_none() {
+            Ok(result)
+        } else {
+            Err(ParseError::TrailingCharacters)
+        }
     }
     /// Finds if the mode indicates an executable file
     #[inline(always)]
@@ -300,3 +371,32 @@ fn test_extra_permissions() {
     assert_eq!("rwSrwSrw-", m.to_string());
 }
 
+#[test]
+fn test_try_from_str() -> Result<(), ParseError> {
+    assert_eq!(Mode::parse("---------")?, Mode::from(0o000));
+    assert_eq!(Mode::parse("rw-r--r--")?, Mode::from(0b110100100));
+    assert_eq!(Mode::parse("rw-r--r--")?, Mode::from(0o644));
+    assert_eq!(Mode::parse("rw-------")?, Mode::from(0o600));
+    assert_eq!(Mode::parse("------r--")?, Mode::from(0o004));
+
+    let expected = Mode::all()
+        .with_extra(STICKY)
+        .with_extra(SETUID)
+        .with_extra(SETGID);
+    assert_eq!(Mode::parse("rwsrwsrwt")?, expected);
+
+    assert!(matches!(
+        Mode::parse("rw-r--r---"),
+        Err(ParseError::TrailingCharacters)
+    ));
+    assert!(matches!(Mode::parse(""), Err(ParseError::NotEnoughInput)));
+    assert!(matches!(
+        Mode::parse("rw-r--r-"),
+        Err(ParseError::NotEnoughInput)
+    ));
+
+    assert!(
+        matches!(Mode::parse("xw-r--r---"), Err(ParseError::InvalidChar(c, pos)) if c == 'x' && pos == 0)
+    );
+    Ok(())
+}
