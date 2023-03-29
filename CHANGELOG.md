@@ -1,5 +1,5 @@
-### next
-- implement FromStr
+### v2.1.0 - 2023-03-29
+- implement FromStr - Thanks @flxo
 
 ### v2.0.0 - 2022-05-11
 - support for setuid, setgid and sticky "extra" permission bits - Thanks @CozyPenguin
