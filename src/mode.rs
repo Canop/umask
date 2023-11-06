@@ -28,17 +28,19 @@ pub const EXEC: Permission = 0b001001001;
 
 pub type ExtraPermission = u32;
 
-/// When the sticky bit is set on a directory, files in that directory can only be
-/// deleted by the owner.
+/// When the sticky bit is set on a directory, files in that directory
+/// can only be deleted by the owner.
 pub const STICKY: ExtraPermission = 0o1000;
-/// When the setgid bit is set on a an executable file, the file will be executed
-/// by with the permissions of the file's group instead of the executing user's group.
+/// When the setgid bit is set on a an executable file, the file will be
+/// executed with the permissions of the file's group instead of the
+/// executing user's group.
 ///
-/// When set on a directory, files and subdirectories created in it are assigned the
-/// same group id as the parent directory.
+/// When set on a directory, files and subdirectories created in it are
+/// assigned the same group id as the parent directory.
 pub const SETGID: ExtraPermission = 0o2000;
-/// When the setuid bit is set on a an executable file, the file will be executed by
-/// with the permissions of the file's owner instead of the executing user.
+/// When the setuid bit is set on a an executable file, the file will
+/// be executed with the permissions of the file's owner instead of
+/// the executing user.
 pub const SETUID: ExtraPermission = 0o4000;
 
 pub const USER_READ: Mode = Mode::new().with_class_perm(USER, READ);
@@ -182,7 +184,8 @@ pub enum ParseError {
 ///
 /// String representations of Modes include the extra permission bits,
 /// which modify how the executable permissions are displayed if set.
-/// If you don't want to include this functionality, call [`without_any_extra()`](Mode::without_any_extra())
+/// If you don't want to include this functionality,
+/// call [`without_any_extra()`](Mode::without_any_extra())
 /// before converting the Mode into a string.
 impl Mode {
     /// Build a mode with absolutely no permission
@@ -202,7 +205,7 @@ impl Mode {
     pub fn try_from(path: &Path) -> Result<Self, io::Error> {
         #[cfg(unix)]
         {
-            let metadata = fs::metadata(&path)?;
+            let metadata = fs::metadata(path)?;
             Ok(Mode::from(metadata.mode()))
         }
         #[cfg(not(unix))]
